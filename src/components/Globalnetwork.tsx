@@ -244,7 +244,7 @@ export default function GlobalNetwork() {
   return (
     <section id="network" ref={section} className="bg-[#16151A] px-[4vw] py-28 text-white">
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <h2 className="text-[clamp(3rem,8vw,8rem)] font-extrabold leading-[0.9] tracking-[-0.05em]">
+        <h2 className="text-[clamp(3rem,8vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
           One network.
           <br />
           Every port.

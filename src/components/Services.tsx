@@ -100,7 +100,7 @@ export default function Services() {
   return (
     <section id="services" ref={root} className="bg-white px-[4vw] py-28 text-[#16151A]">
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <h2 className="svc-head text-[clamp(3rem,8vw,8rem)] font-extrabold leading-[0.9] tracking-[-0.05em]">
+        <h2 className="svc-head text-[clamp(3rem,8vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
           What we
           <br />
           move.
@@ -127,7 +127,7 @@ export default function Services() {
                 {s.icon}
               </div>
               <div className="relative transition-colors duration-500 group-hover:text-[#16151A] group-focus-visible:text-[#16151A]">
-                <h3 className="text-3xl font-extrabold tracking-[-0.03em]">{s.title}</h3>
+                <h3 className="text-3xl font-bold tracking-[-0.03em]">{s.title}</h3>
                 <p className="mt-3 text-[18px] font-medium leading-relaxed opacity-70">{s.body}</p>
                 <span className="mt-6 flex items-center gap-2 text-sm font-semibold">
                   Learn more

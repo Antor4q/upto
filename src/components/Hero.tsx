@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import ContainerRig from "./Containerrig";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 const STATS = [
   { value: 12000, suffix: "+", label: "shipments moved" },
@@ -97,10 +98,10 @@ export default function Hero() {
   return (
     <section
       ref={root}
-      className="relative h-svh min-h-[680px] w-full overflow-hidden bg-white text-[#16151A]"
+      className="relative h-svh min-h-[560px] w-full overflow-hidden bg-white text-[#16151A] md:min-h-[680px]"
     >
       {/* Headline (behind the container). "Upto" sits lower and to the right. */}
-      <h1 className="headline absolute inset-x-0 top-[14svh] z-0 px-[4vw] text-[clamp(4.5rem,min(19vw,26svh),21rem)] font-extrabold leading-[0.82] tracking-[-0.05em]">
+      <h1 className="headline absolute inset-x-0 top-[14svh] z-0 pl-[max(4vw,env(safe-area-inset-left))] pr-[max(4vw,env(safe-area-inset-right))] text-[clamp(3.5rem,min(19vw,26svh),21rem)] font-bold leading-[0.82] tracking-[-0.05em]">
         <div>
           <Word text="Deliver" />
         </div>
@@ -109,8 +110,8 @@ export default function Hero() {
         </div>
       </h1>
 
-      {/* Crane + container (larger) */}
-      <div className="lift pointer-events-none absolute inset-x-0 -top-[10svh] z-10 mx-auto w-[min(94vw,880px)]">
+      {/* Crane + container (larger, capped by viewport height on short screens) */}
+      <div className="lift pointer-events-none absolute inset-x-0 -top-[10svh] z-10 mx-auto w-[min(94vw,880px,120svh)]">
         <div className="rig">
           <div className="sway origin-top">
             <div className="par-obj">
@@ -121,19 +122,19 @@ export default function Hero() {
       </div>
 
       {/* Live tracking card, lower on the right */}
-      <div className="fade absolute right-[4vw] top-[24svh] z-20 hidden w-56 bg-[#FF4D1F] p-4 text-[#16151A] lg:block">
-        <div className="flex items-center gap-2 text-sm font-semibold">
+      <div className="fade absolute right-[max(4vw,env(safe-area-inset-right))] top-[24svh] z-20 hidden w-56 bg-[#FF4D1F] p-4 text-[#16151A] lg:block">
+        <div className="flex items-center gap-2 text-[18px] font-semibold">
           <span className="relative flex size-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#16151A] opacity-60" />
             <span className="relative inline-flex size-2 rounded-full bg-[#16151A]" />
           </span>
           Live tracking
         </div>
-        <p className="mt-3 text-xs leading-snug">Singapore to Rotterdam. Arrives in 6 days.</p>
+        <p className="mt-3 text-base font-medium leading-snug">Singapore to Rotterdam. Arrives in 6 days.</p>
       </div>
 
-      {/* Video card (desktop) */}
-      <div className="fade absolute bottom-[5svh] left-[4vw] z-20 hidden w-72 bg-[#16151A] p-3 text-[#F4F2EE] md:block">
+      {/* Video card (tablet and up) */}
+      <div className="fade absolute bottom-[max(5svh,env(safe-area-inset-bottom))] left-[max(4vw,env(safe-area-inset-left))] z-20 hidden w-64 bg-[#16151A] p-3 text-[#F4F2EE] md:block lg:w-72">
         <button
           type="button"
           aria-label="Play video: how Upto moves your cargo"
@@ -149,28 +150,28 @@ export default function Hero() {
           </span>
           <span className="absolute bottom-2 left-2 bg-[#16151A] px-2 py-0.5 text-xs font-medium">1:24</span>
         </button>
-        <p className="mt-3 text-base font-semibold leading-tight">See how we move your cargo</p>
-        <p className="mt-1 text-sm leading-snug opacity-70">
+        <p className="mt-3 text-[18px] font-semibold leading-tight">See how we move your cargo</p>
+        <p className="mt-1 text-base leading-snug opacity-70">
           From booking to the dock, a short look at how a shipment travels with Upto.
         </p>
         <a
           href="#quote"
-          className="mt-4 block rounded-sm bg-[#FF4D1F] px-5 py-3 text-center text-sm font-semibold text-[#16151A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4F2EE]"
+          className="mt-4 block rounded-sm bg-[#FF4D1F] px-5 py-3 text-center text-[18px] font-medium text-[#16151A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F4F2EE]"
         >
           Get a quote
         </a>
       </div>
 
       {/* Mobile: copy + quote */}
-      <div className="fade absolute inset-x-[4vw] bottom-[4svh] z-20 md:hidden">
-        <p className="max-w-xs text-lg font-medium leading-snug">Freight that moves at the speed of your business.</p>
+      <div className="fade absolute inset-x-0 bottom-[max(4svh,env(safe-area-inset-bottom))] z-20 pl-[max(4vw,env(safe-area-inset-left))] pr-[max(4vw,env(safe-area-inset-right))] md:hidden">
+        <p className="max-w-xs text-base font-medium leading-snug sm:text-lg">Freight that moves at the speed of your business.</p>
         <a href="#quote" className="mt-4 inline-block rounded-sm bg-[#FF4D1F] px-6 py-4 text-sm font-semibold text-[#16151A]">
           Get a quote
         </a>
       </div>
 
       {/* Stats: three ruled columns, bottom right (lg and up) */}
-      <ul className="fade absolute bottom-[5svh] right-[4vw] z-20 hidden gap-10 text-4xl tabular-nums xl:text-5xl lg:flex">
+      <ul className="fade absolute bottom-[max(5svh,env(safe-area-inset-bottom))] right-[max(4vw,env(safe-area-inset-right))] z-20 hidden gap-10 text-4xl tabular-nums xl:text-5xl lg:flex">
         {STATS.map((s, i) => (
           <li key={s.label} className={`shrink-0 border-t-2 border-[#16151A] pt-3 ${i === 0 ? "min-w-[7ch]" : "min-w-[5ch]"}`}>
             <p
@@ -180,7 +181,7 @@ export default function Hero() {
             >
               {s.value.toLocaleString("en-US") + s.suffix}
             </p>
-            <p className="mt-2 whitespace-nowrap text-sm opacity-70">{s.label}</p>
+            <p className="mt-2 whitespace-nowrap text-base opacity-70">{s.label}</p>
           </li>
         ))}
       </ul>
