@@ -39,6 +39,7 @@ function lookup(raw: string): Result | null {
 
 export default function Tracking() {
   const root = useRef<HTMLElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,6 +56,14 @@ export default function Tracking() {
     setTimeout(() => {
       setResult(found);
       setLoading(false);
+
+      // Stacked layout (below lg): the panel sits under the form, so bring it into view
+      if (window.matchMedia("(max-width: 1023px)").matches) {
+        const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        requestAnimationFrame(() =>
+          panel.current?.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" })
+        );
+      }
     }, 800);
   };
 
@@ -80,22 +89,26 @@ export default function Tracking() {
   );
 
   return (
-    <section id="tracking" ref={root} className="bg-white px-[4vw] py-28 text-[#16151A]">
-      <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+    <section
+      id="tracking"
+      ref={root}
+      className="overflow-x-clip bg-white px-5 py-16 text-[#16151A] sm:px-[4vw] sm:py-20 lg:py-28"
+    >
+      <div className="grid gap-10 sm:gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
         {/* Left: heading + form */}
-        <div>
-          <h2 className="text-[clamp(3rem,8vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
+        <div className="min-w-0">
+          <h2 className="text-[clamp(2.75rem,9vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
             Where’s
             <br />
             my cargo?
           </h2>
-          <p className="mt-6 max-w-md text-[18px] font-medium leading-relaxed opacity-70">
+          <p className="mt-5 max-w-md text-base font-medium leading-relaxed opacity-70 sm:mt-6 sm:text-[18px]">
             Enter your tracking ID to see exactly where your container is, and when it lands.
           </p>
 
           <form
             noValidate
-            className="mt-10"
+            className="mt-8 sm:mt-10"
             onSubmit={(e) => {
               e.preventDefault();
               run(value);
@@ -113,12 +126,12 @@ export default function Tracking() {
                 autoComplete="off"
                 aria-invalid={!!error}
                 aria-describedby="trk-error"
-                className="h-16 w-full border-2 border-[#16151A] bg-white px-5 text-xl font-semibold uppercase tracking-tight placeholder:opacity-40 focus-visible:outline-4 focus-visible:outline-[#FF4D1F]"
+                className="h-14 w-full min-w-0 border-2 border-[#16151A] bg-white px-4 text-lg font-semibold uppercase tracking-tight placeholder:opacity-40 focus-visible:outline-4 focus-visible:outline-[#FF4D1F] sm:h-16 sm:px-5 sm:text-xl"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="h-16 shrink-0 bg-[#FF4D1F] px-8 font-semibold text-[#16151A] transition-colors hover:bg-[#16151A] hover:text-white focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#16151A] disabled:opacity-60"
+                className="h-14 shrink-0 bg-[#FF4D1F] px-8 font-semibold text-[#16151A] transition-colors focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#16151A] disabled:opacity-60 sm:h-16 [@media(hover:hover)]:hover:bg-[#16151A] [@media(hover:hover)]:hover:text-white"
               >
                 {loading ? "Tracking…" : "Track"}
               </button>
@@ -138,7 +151,7 @@ export default function Tracking() {
                   setValue(s);
                   run(s);
                 }}
-                className="border border-[#16151A]/30 px-3 py-1.5 transition-colors hover:border-[#16151A] hover:bg-[#16151A] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4D1F]"
+                className="border border-[#16151A]/30 px-3 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4D1F] [@media(hover:hover)]:hover:border-[#16151A] [@media(hover:hover)]:hover:bg-[#16151A] [@media(hover:hover)]:hover:text-white"
               >
                 {s}
               </button>
@@ -147,17 +160,21 @@ export default function Tracking() {
         </div>
 
         {/* Right: result panel */}
-        <div className="min-h-[34rem] bg-[#16151A] p-6 text-white md:p-8" aria-live="polite">
+        <div
+          ref={panel}
+          className="min-h-[26rem] min-w-0 scroll-mt-6 bg-[#16151A] p-4 text-white sm:min-h-[34rem] sm:p-6 md:p-8"
+          aria-live="polite"
+        >
           {!result ? (
-            <div className="grid h-full min-h-[30rem] place-items-center border-2 border-dashed border-white/20 p-6 text-center">
+            <div className="grid h-full min-h-[22rem] place-items-center border-2 border-dashed border-white/20 p-6 text-center sm:min-h-[30rem]">
               <div>
-                <svg viewBox="0 0 64 40" className="mx-auto w-24 text-white/30" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <svg viewBox="0 0 64 40" className="mx-auto w-20 text-white/30 sm:w-24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <rect x="4" y="6" width="56" height="28" />
                   {Array.from({ length: 9 }, (_, i) => (
                     <line key={i} x1={10 + i * 5.5} y1="10" x2={10 + i * 5.5} y2="30" />
                   ))}
                 </svg>
-                <p className="mt-4 text-[18px] font-medium opacity-70">Your shipment will show up here.</p>
+                <p className="mt-4 text-base font-medium opacity-70 sm:text-[18px]">Your shipment will show up here.</p>
               </div>
             </div>
           ) : (
@@ -165,23 +182,23 @@ export default function Tracking() {
               <p className="sr-only">
                 Showing shipment {result.id}, currently {result.steps[result.stage].title}.
               </p>
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="trk-sum">
+              <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+                <div className="trk-sum min-w-0">
                   <p className="text-sm font-medium opacity-70">Shipment</p>
-                  <p className="text-3xl font-extrabold tracking-[-0.03em]">{result.id}</p>
+                  <p className="text-2xl font-extrabold tracking-[-0.03em] sm:text-3xl">{result.id}</p>
                 </div>
                 <p className="trk-sum bg-[#FF4D1F] px-3 py-1.5 text-sm font-semibold text-[#16151A]">
                   {result.steps[result.stage].title}
                 </p>
               </div>
 
-              <dl className="mt-6 grid grid-cols-3 gap-4 border-y border-white/15 py-5 text-sm">
+              <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-y border-white/15 py-5 text-sm sm:grid-cols-3">
                 {[
                   ["Route", `${result.origin} to ${result.dest}`],
                   ["Container", result.size],
                   ["Arrives", result.eta],
                 ].map(([k, v]) => (
-                  <div key={k} className="trk-sum">
+                  <div key={k} className={`trk-sum min-w-0 ${k === "Route" ? "col-span-2 sm:col-span-1" : ""}`}>
                     <dt className="opacity-70">{k}</dt>
                     <dd className="mt-1 text-base font-semibold leading-snug">{v}</dd>
                   </div>
@@ -204,7 +221,11 @@ export default function Tracking() {
                 {result.steps.map((st, i) => {
                   const done = i <= result.stage;
                   return (
-                    <li key={st.title} className="trk-row relative flex h-20 items-start gap-4 pl-10">
+                    // h-20 stays fixed: the icon/fill animation math (ROW) depends on it
+                    <li
+                      key={st.title}
+                      className="trk-row relative flex h-20 flex-col items-start pl-10 sm:flex-row sm:gap-4"
+                    >
                       <span
                         aria-hidden
                         style={{ transitionDelay: `${0.3 + i * 0.5}s` }}
@@ -212,11 +233,15 @@ export default function Tracking() {
                           done ? "border-[#FF4D1F] bg-[#FF4D1F]" : "border-white/30 bg-[#16151A]"
                         }`}
                       />
-                      <div className={done ? "" : "opacity-60"}>
+                      <div className={`min-w-0 ${done ? "" : "opacity-60"}`}>
                         <p className="text-lg font-semibold leading-6">{st.title}</p>
-                        <p className="text-base font-medium opacity-70">{st.detail}</p>
+                        <p className="text-sm font-medium leading-5 opacity-70 sm:text-base sm:leading-normal">
+                          {st.detail}
+                        </p>
                       </div>
-                      <p className="ml-auto shrink-0 text-sm font-medium opacity-70">{st.date}</p>
+                      <p className="mt-0.5 shrink-0 text-xs font-medium leading-4 opacity-70 sm:ml-auto sm:mt-0 sm:text-sm sm:leading-normal">
+                        {st.date}
+                      </p>
                     </li>
                   );
                 })}

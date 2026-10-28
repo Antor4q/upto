@@ -1,11 +1,15 @@
 "use client";
 
 import { useRef, type CSSProperties } from "react";
+import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
+
+// Every footer link goes to the home page for now. Change this (or per-link hrefs) later.
+const HOME = "/";
 
 // Placeholders: replace with the real details
 const CONTACT = {
@@ -17,34 +21,20 @@ const CONTACT = {
 const COLUMNS = [
   {
     title: "Services",
-    links: [
-      ["Air freight", "#services"],
-      ["Sea freight", "#services"],
-      ["Road freight", "#services"],
-      ["Warehousing", "#services"],
-    ],
+    links: ["Air freight", "Sea freight", "Road freight", "Warehousing"],
   },
   {
     title: "Company",
-    links: [
-      ["About", "#about"],
-      ["Our network", "#network"],
-      ["Track a shipment", "#tracking"],
-      ["Get a quote", "#quote"],
-    ],
+    links: ["About", "Our network", "Track a shipment", "Get a quote"],
   },
   {
     title: "Follow",
-    links: [
-      ["LinkedIn", "#"],
-      ["Instagram", "#"],
-      ["X", "#"],
-    ],
+    links: ["LinkedIn", "Instagram", "X"],
   },
 ];
 
 const link =
-  "relative inline-block after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#16151A] motion-reduce:after:transition-none";
+  "relative inline-block py-1 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 focus-visible:after:scale-x-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#16151A] motion-reduce:after:transition-none [@media(hover:hover)]:hover:after:scale-x-100";
 
 export default function Footer() {
   const root = useRef<HTMLElement>(null);
@@ -62,7 +52,7 @@ export default function Footer() {
           duration: 0.9,
           stagger: 0.1,
           ease: "power3.out",
-          scrollTrigger: { trigger: root.current, start: "top 75%" },
+          scrollTrigger: { trigger: root.current, start: "top 85%" },
         });
         // Wordmark letters rise from the bottom edge
         gsap.from(q(".f-char"), {
@@ -72,7 +62,6 @@ export default function Footer() {
           ease: "power4.out",
           scrollTrigger: { trigger: mark.current, start: "top 95%" },
         });
-
       });
     },
     { scope: root }
@@ -84,42 +73,48 @@ export default function Footer() {
   };
 
   return (
-    <footer id="contact" ref={root} className="overflow-hidden bg-white px-[4vw] pt-20 text-[#16151A]">
+    <footer
+      id="contact"
+      ref={root}
+      className="overflow-hidden bg-white px-5 pt-14 text-[#16151A] sm:px-[4vw] sm:pt-20"
+    >
       {/* Top: contact + links */}
-      <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr]">
-        <div>
+      <div className="grid gap-10 sm:gap-12 lg:grid-cols-[1.3fr_1fr]">
+        <div className="min-w-0">
           <p className="f-in flex items-center gap-2 text-sm font-medium">
-            <span className="size-2.5 bg-[#FF4D1F]" aria-hidden />
+            <span className="size-2.5 shrink-0 bg-[#FF4D1F]" aria-hidden />
             Say hello
           </p>
           <a
             href={`mailto:${CONTACT.email}`}
-            className="f-in group mt-5 flex items-center gap-5 focus-visible:outline-4 focus-visible:outline-offset-8 focus-visible:outline-[#FF4D1F]"
+            className="f-in group mt-4 flex items-center gap-3 focus-visible:outline-4 focus-visible:outline-offset-8 focus-visible:outline-[#FF4D1F] sm:mt-5 sm:gap-5"
           >
-            <span className="break-all text-[clamp(2rem,5.2vw,5.5rem)] font-extrabold leading-none tracking-[-0.04em]">{CONTACT.email}</span>
-            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#FF4D1F] transition-transform duration-500 group-hover:rotate-45 md:size-16 motion-reduce:transition-none">
+            <span className="min-w-0 break-all text-[clamp(1.5rem,6.5vw,2.75rem)] font-extrabold leading-none tracking-[-0.04em] lg:text-[clamp(2rem,5.2vw,5.5rem)]">
+              {CONTACT.email}
+            </span>
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-[#FF4D1F] transition-transform duration-500 motion-reduce:transition-none md:size-16 [@media(hover:hover)]:group-hover:rotate-45">
               <svg viewBox="0 0 16 16" className="size-5 md:size-7" fill="none" stroke="#16151A" strokeWidth="2" aria-hidden>
                 <path d="M3 8h10M9 4l4 4-4 4" />
               </svg>
             </span>
           </a>
-          <address className="f-in mt-6 text-[18px] font-medium not-italic leading-relaxed opacity-70">
+          <address className="f-in mt-5 text-base font-medium not-italic leading-relaxed opacity-70 sm:mt-6 sm:text-[18px]">
             {CONTACT.phone}
             <br />
             {CONTACT.address}
           </address>
         </div>
 
-        <nav aria-label="Footer" className="grid grid-cols-2 gap-10 sm:grid-cols-3">
+        <nav aria-label="Footer" className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 sm:gap-x-10">
           {COLUMNS.map((c) => (
-            <div key={c.title} className="f-in">
+            <div key={c.title} className="f-in min-w-0">
               <h3 className="border-t-2 border-[#16151A] pt-3 text-sm font-medium opacity-70">{c.title}</h3>
-              <ul className="mt-4 space-y-3 text-lg font-medium">
-                {c.links.map(([label, href]) => (
+              <ul className="mt-3 space-y-1 text-base font-medium sm:mt-4 sm:space-y-2 sm:text-lg">
+                {c.links.map((label) => (
                   <li key={label}>
-                    <a href={href} className={link}>
+                    <Link href={HOME} className={link}>
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -129,27 +124,16 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="mt-16 flex flex-wrap items-center justify-between gap-4 border-t border-[#16151A]/15 py-5 text-sm font-medium">
+      <div className="mt-12 flex flex-col items-start gap-4 border-t border-[#16151A]/15 py-5 text-sm font-medium sm:mt-16 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <p>© {new Date().getFullYear()} Upto. All rights reserved.</p>
-        <div className="flex items-center gap-6">
-          <a href="#" className={link}>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <Link href={HOME} className={link}>
             Privacy
-          </a>
-          <a href="#" className={link}>
+          </Link>
+          <Link href={HOME} className={link}>
             Terms
-          </a>
-          <button
-            type="button"
-            onClick={toTop}
-            className="group inline-flex items-center gap-2 rounded-full bg-[#16151A] py-2 pl-4 pr-2 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF4D1F]"
-          >
-            Back to top
-            <span className="grid size-7 place-items-center rounded-full bg-[#FF4D1F] transition-transform duration-300 group-hover:-translate-y-0.5 motion-reduce:transition-none">
-              <svg viewBox="0 0 16 16" className="size-4" fill="none" stroke="#16151A" strokeWidth="2" aria-hidden>
-                <path d="M8 13V3M4 7l4-4 4 4" />
-              </svg>
-            </span>
-          </button>
+          </Link>
+        
         </div>
       </div>
 

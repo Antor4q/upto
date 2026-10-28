@@ -50,12 +50,14 @@ WORLD.forEach((row, r) => {
 
 export default function GlobalNetwork() {
   const section = useRef<HTMLElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const cv = canvas.current!;
     const box = wrap.current!;
+    const scrollBox = scroller.current!;
     const ctx = cv.getContext("2d")!;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const font = getComputedStyle(cv).fontFamily;
@@ -63,6 +65,9 @@ export default function GlobalNetwork() {
     const state = { map: reduce ? 1 : 0, routes: reduce ? 1 : 0 };
     const size = { w: 0, h: 0 };
     const mouse = { x: 0, y: 0, active: false };
+    let centered = false;
+    let touchTimer: ReturnType<typeof setTimeout> | undefined;
+
     const routes = ROUTES.map(([a, b], i) => ({
       a: toUnit(PORTS[a]),
       b: toUnit(PORTS[b]),
@@ -80,6 +85,12 @@ export default function GlobalNetwork() {
       cv.style.width = `${size.w}px`;
       cv.style.height = `${size.h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // On small screens the map scrolls sideways: start centred on Europe/Asia
+      if (!centered && scrollBox.scrollWidth > scrollBox.clientWidth) {
+        scrollBox.scrollLeft = (scrollBox.scrollWidth - scrollBox.clientWidth) * 0.55;
+        centered = true;
+      }
       if (reduce) draw(0);
     };
 
@@ -99,11 +110,14 @@ export default function GlobalNetwork() {
       const { w, h } = size;
       if (!w) return;
       ctx.clearRect(0, 0, w, h);
-      const rad = (w / COLS) * 0.3;
-      const R = Math.max(70, w * 0.06);
+
+      // s scales everything that has a fixed pixel size (1 on wide screens, ~0.7 on phones)
+      const s = Math.min(1, Math.max(0.7, w / 1000));
+      const rad = Math.max(1.1, (w / COLS) * 0.3);
+      const R = Math.max(60, w * 0.06);
       const hot: { x: number; y: number; k: number }[] = [];
 
-      // land dots (batched), nearby ones glow orange under the cursor
+      // land dots (batched), nearby ones glow orange under the cursor / finger
       ctx.fillStyle = "rgba(255,255,255,.2)";
       ctx.beginPath();
       for (const d of DOTS) {
@@ -128,7 +142,7 @@ export default function GlobalNetwork() {
       }
 
       // routes
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.5 * s;
       ctx.strokeStyle = `rgba(${ORANGE},.6)`;
       const arcs = routes.map(arc);
       if (state.routes > 0) {
@@ -148,15 +162,15 @@ export default function GlobalNetwork() {
       if (!reduce && state.routes >= 1) {
         arcs.forEach((p, i) => {
           const r = routes[i];
-          for (let s = 0; s < 2; s++) {
-            const t0 = (time / r.period + r.phase + s * 0.5) % 1;
+          for (let s2 = 0; s2 < 2; s2++) {
+            const t0 = (time / r.period + r.phase + s2 * 0.5) % 1;
             for (let tail = 0; tail < 6; tail++) {
               const t = t0 - tail * 0.012;
               if (t < 0) continue;
               const pt = at(p, t);
               ctx.fillStyle = `rgba(255,255,255,${0.9 - tail * 0.15})`;
               ctx.beginPath();
-              ctx.arc(pt.x, pt.y, 3 - tail * 0.35, 0, TAU);
+              ctx.arc(pt.x, pt.y, Math.max(0.6, (3 - tail * 0.35) * s), 0, TAU);
               ctx.fill();
             }
           }
@@ -164,28 +178,35 @@ export default function GlobalNetwork() {
       }
 
       // ports: pulse + core + label
-      ctx.font = `500 12px ${font}`;
+      ctx.font = `500 ${w < 700 ? 11 : 12}px ${font}`;
       ctx.textBaseline = "middle";
       ports.forEach((p, i) => {
         const x = p.u * w, y = p.v * h;
-        const over = mouse.active && Math.hypot(x - mouse.x, y - mouse.y) < 16;
+        const over = mouse.active && Math.hypot(x - mouse.x, y - mouse.y) < 20;
         const alpha = Math.min(1, Math.max(0, (state.map - p.u) * 6));
         if (!alpha) return;
         if (!reduce) {
           const ph = (time * 0.5 + i * 0.13) % 1;
           ctx.strokeStyle = `rgba(${ORANGE},${(1 - ph) * 0.5 * alpha})`;
-          ctx.lineWidth = 1.5;
+          ctx.lineWidth = 1.5 * s;
           ctx.beginPath();
-          ctx.arc(x, y, 4 + ph * 14, 0, TAU);
+          ctx.arc(x, y, (4 + ph * 14) * s, 0, TAU);
           ctx.stroke();
         }
         ctx.fillStyle = `rgba(${ORANGE},${alpha})`;
         ctx.beginPath();
-        ctx.arc(x, y, over ? 6 : 4, 0, TAU);
+        ctx.arc(x, y, (over ? 6 : 4) * s, 0, TAU);
         ctx.fill();
+
+        // label: flip to the left side if it would run off the right edge
+        const name = PORT_LIST[i].name;
+        const tw = ctx.measureText(name).width;
+        const flip = x + 10 + tw > w - 4;
+        ctx.textAlign = flip ? "right" : "left";
         ctx.fillStyle = `rgba(255,255,255,${(over ? 1 : 0.7) * alpha})`;
-        ctx.fillText(PORT_LIST[i].name, x + 10, y - 10);
+        ctx.fillText(name, flip ? x - 10 : x + 10, y - 10);
       });
+      ctx.textAlign = "left";
     }
 
     const onMove = (e: PointerEvent) => {
@@ -193,10 +214,26 @@ export default function GlobalNetwork() {
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
       mouse.active = true;
+      clearTimeout(touchTimer);
     };
-    const onLeave = () => (mouse.active = false);
+    // Touch: tap highlights, then fades out. Scroll gesture cancels it.
+    const onDown = (e: PointerEvent) => {
+      onMove(e);
+    };
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return;
+      clearTimeout(touchTimer);
+      touchTimer = setTimeout(() => (mouse.active = false), 1200);
+    };
+    const onLeave = () => {
+      clearTimeout(touchTimer);
+      mouse.active = false;
+    };
     if (!reduce) {
+      cv.addEventListener("pointerdown", onDown);
       cv.addEventListener("pointermove", onMove);
+      cv.addEventListener("pointerup", onUp);
+      cv.addEventListener("pointercancel", onLeave);
       cv.addEventListener("pointerleave", onLeave);
     }
 
@@ -222,7 +259,7 @@ export default function GlobalNetwork() {
       ? null
       : ScrollTrigger.create({
           trigger: section.current,
-          start: "top 60%",
+          start: "top 70%",
           once: true,
           onEnter: () =>
             gsap
@@ -232,31 +269,47 @@ export default function GlobalNetwork() {
         });
 
     return () => {
+      clearTimeout(touchTimer);
       gsap.ticker.remove(loop);
       visible.kill();
       reveal?.kill();
       ro.disconnect();
+      cv.removeEventListener("pointerdown", onDown);
       cv.removeEventListener("pointermove", onMove);
+      cv.removeEventListener("pointerup", onUp);
+      cv.removeEventListener("pointercancel", onLeave);
       cv.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
   return (
-    <section id="network" ref={section} className="bg-[#16151A] px-[4vw] py-28 text-white">
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <h2 className="text-[clamp(3rem,8vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
+    <section
+      id="network"
+      ref={section}
+      className="overflow-x-clip bg-[#16151A] px-5 py-16 text-white sm:px-[4vw] sm:py-20 lg:py-28"
+    >
+      <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-end md:justify-between">
+        <h2 className="text-[clamp(2.75rem,9vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
           One network.
           <br />
           Every port.
         </h2>
-        <p className="max-w-sm text-[18px] font-medium leading-relaxed opacity-70">
-          Containers move between the ports we work with every day. Hover the map to see where we operate.
+        <p className="max-w-sm text-base font-medium leading-relaxed opacity-70 sm:text-[18px]">
+          Containers move between the ports we work with every day.{" "}
+          <span className="hidden [@media(hover:hover)]:inline">Hover</span>
+          <span className="[@media(hover:hover)]:hidden">Tap</span> the map to see where we operate.
         </p>
       </div>
 
-      {/* On small screens the map scrolls sideways instead of shrinking to nothing */}
-      <div className="mt-12 overflow-x-auto">
-        <div ref={wrap} className="min-w-[760px]">
+      {/* On small screens the map scrolls sideways (edge-to-edge) instead of shrinking to nothing */}
+      <div
+        ref={scroller}
+        role="region"
+        aria-label="Shipping network map, scrollable"
+        tabIndex={0}
+        className="-mx-5 mt-8 overflow-x-auto px-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF4D1F] sm:-mx-[4vw] sm:mt-12 sm:px-[4vw] md:mx-0 md:px-0"
+      >
+        <div ref={wrap} className="min-w-[640px] md:min-w-0">
           <canvas
             ref={canvas}
             role="img"
@@ -266,7 +319,11 @@ export default function GlobalNetwork() {
         </div>
       </div>
 
-      <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm font-medium opacity-80">
+      <p className="mt-3 text-xs font-medium opacity-50 md:hidden" aria-hidden>
+        Swipe sideways to explore the map →
+      </p>
+
+      <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium opacity-80 sm:gap-x-8">
         <li className="flex items-center gap-2">
           <span className="size-2.5 rounded-full bg-[#FF4D1F]" aria-hidden /> Port
         </li>

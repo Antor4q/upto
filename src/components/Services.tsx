@@ -11,7 +11,7 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
 const Icon = ({ children }: { children: ReactNode }) => (
   <svg
     viewBox="0 0 64 64"
-    className="size-16 transition-transform duration-500 group-hover:translate-x-2 motion-reduce:transition-none"
+    className="size-12 shrink-0 transition-transform duration-500 group-hover:translate-x-2 sm:size-14 xl:size-16 motion-reduce:transition-none"
     fill="none"
     stroke="currentColor"
     strokeWidth="2.5"
@@ -69,28 +69,42 @@ const SERVICES = [
 
 export default function Services() {
   const root = useRef<HTMLElement>(null);
+  const head = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLUListElement>(null);
 
   useGSAP(
     () => {
       const q = gsap.utils.selector(root);
       const mm = gsap.matchMedia();
+
       mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // Heading reveal
         gsap.from(q(".svc-head"), {
           y: 40,
           opacity: 0,
           duration: 0.9,
           stagger: 0.1,
           ease: "power3.out",
-          scrollTrigger: { trigger: root.current, start: "top 75%" },
+          scrollTrigger: { trigger: head.current, start: "top 88%", once: true },
         });
-        gsap.from(q(".svc-card"), {
-          y: 80,
-          opacity: 0,
-          duration: 0.9,
-          stagger: 0.12,
-          ease: "power3.out",
-          scrollTrigger: { trigger: grid.current, start: "top 85%" },
+
+        // Cards: each batch reveals when it actually enters the viewport,
+        // so stacked mobile cards don't animate off-screen.
+        const cards = q(".svc-card");
+        gsap.set(cards, { y: 60, opacity: 0 });
+
+        ScrollTrigger.batch(cards, {
+          start: "top 90%",
+          once: true,
+          onEnter: (batch) =>
+            gsap.to(batch, {
+              y: 0,
+              opacity: 1,
+              duration: 0.9,
+              stagger: 0.12,
+              ease: "power3.out",
+              overwrite: true,
+            }),
         });
       });
     },
@@ -98,25 +112,35 @@ export default function Services() {
   );
 
   return (
-    <section id="services" ref={root} className="bg-white px-[4vw] py-28 text-[#16151A]">
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <h2 className="svc-head text-[clamp(3rem,8vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
+    <section
+      id="services"
+      ref={root}
+      className="overflow-x-clip bg-white px-5 py-16 text-[#16151A] sm:px-[4vw] sm:py-20 lg:py-28"
+    >
+      <div
+        ref={head}
+        className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-end md:justify-between"
+      >
+        <h2 className="svc-head text-[clamp(2.75rem,9vw,8rem)] font-bold leading-[0.9] tracking-[-0.05em]">
           What we
           <br />
           move.
         </h2>
-        <p className="svc-head max-w-sm text-[18px] font-medium leading-relaxed opacity-70">
+        <p className="svc-head max-w-sm text-base font-medium leading-relaxed opacity-70 sm:text-[18px]">
           Four ways to get cargo where it needs to be, all tracked and all handled by one team.
         </p>
       </div>
 
-      <ul ref={grid} className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul
+        ref={grid}
+        className="mt-8 grid grid-cols-1 gap-3 sm:mt-12 sm:gap-4 md:grid-cols-2 xl:grid-cols-4"
+      >
         {SERVICES.map((s, i) => (
           <li key={s.title} className="svc-card">
             {/* hover lift lives on the anchor so it never fights the GSAP reveal on the li */}
             <a
               href="#"
-              className="group relative flex min-h-[26rem] flex-col justify-between overflow-hidden bg-[#16151A] p-6 text-white transition-transform duration-500 hover:-translate-y-6 focus-visible:-translate-y-6 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF4D1F] motion-reduce:transition-none lg:min-h-[30rem]"
+              className="group relative flex min-h-[20rem] flex-col justify-between gap-10 overflow-hidden bg-[#16151A] p-5 text-white transition-transform duration-500 focus-visible:-translate-y-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF4D1F] sm:min-h-[24rem] sm:p-6 md:focus-visible:-translate-y-4 xl:min-h-[30rem] xl:focus-visible:-translate-y-6 [@media(hover:hover)]:hover:-translate-y-2 md:[@media(hover:hover)]:hover:-translate-y-4 xl:[@media(hover:hover)]:hover:-translate-y-6 motion-reduce:transition-none"
             >
               <span
                 aria-hidden
@@ -127,11 +151,20 @@ export default function Services() {
                 {s.icon}
               </div>
               <div className="relative transition-colors duration-500 group-hover:text-[#16151A] group-focus-visible:text-[#16151A]">
-                <h3 className="text-3xl font-bold tracking-[-0.03em]">{s.title}</h3>
-                <p className="mt-3 text-[18px] font-medium leading-relaxed opacity-70">{s.body}</p>
-                <span className="mt-6 flex items-center gap-2 text-sm font-semibold">
+                <h3 className="text-2xl font-bold tracking-[-0.03em] sm:text-3xl">{s.title}</h3>
+                <p className="mt-3 text-base font-medium leading-relaxed opacity-70 sm:text-[17px] xl:text-[18px]">
+                  {s.body}
+                </p>
+                <span className="mt-5 flex items-center gap-2 text-sm font-semibold sm:mt-6">
                   Learn more
-                  <svg viewBox="0 0 16 16" className="size-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <svg
+                    viewBox="0 0 16 16"
+                    className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden
+                  >
                     <path d="M2 8h11M9 4l4 4-4 4" />
                   </svg>
                 </span>
